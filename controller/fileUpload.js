@@ -2,10 +2,18 @@ import multer from 'multer'; // Import multer for handling file uploads
 import Buckets from '../models/bucket.js'; // Import the Buckets model
 import Files from '../models/file.js'; // Import the Files model
 
+// Allow only alphanumeric, dash, underscore, dot, and space characters in names
+// used as filesystem paths to prevent directory traversal attacks.
+const isSafeName = (name) => /^[a-zA-Z0-9._\- ]+$/.test(name);
+
 // Multer storage configuration for file uploads
 const storage = multer.diskStorage({
     destination: async function (req, file, cb) {
         try {
+            if (!isSafeName(file.originalname)) {
+                return cb(new Error('Invalid file name. Avoid path separators and special characters.'));
+            }
+
             // Find the bucket associated with the upload
             const bucket = await Buckets.findOne({ _id: req.params.bucketId, owner: req.user._id });
             

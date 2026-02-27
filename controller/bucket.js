@@ -7,9 +7,17 @@ import { fileURLToPath } from 'url'; // Import fileURLToPath from the 'url' modu
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Allow only alphanumeric, dash, underscore, and dot characters in names
+// used as filesystem paths to prevent directory traversal attacks.
+const isSafeName = (name) => /^[a-zA-Z0-9._-]+$/.test(name);
+
 // Create a new bucket
 export const addBuckets = async (req, res) => {
     try {
+        if (!req.body.bucketName || !isSafeName(req.body.bucketName)) {
+            return res.status(400).json({ error: 'Invalid bucket name. Only alphanumeric characters, dashes, underscores, and dots are allowed.' });
+        }
+
         // Check if a bucket with the same name already exists
         const isBucket = await Buckets.findOne({ bucketName: req.body.bucketName });
 
@@ -92,6 +100,10 @@ export const updateBucketName = async (req, res) => {
     try {
         const { bucketId } = req.params;
         const { bucketName } = req.body;
+
+        if (!bucketName || !isSafeName(bucketName)) {
+            return res.status(400).json({ error: 'Invalid bucket name. Only alphanumeric characters, dashes, underscores, and dots are allowed.' });
+        }
 
         // Find the bucket by ID and owner
         const bucket = await Buckets.findOne({ _id: bucketId, owner: req.user._id });
