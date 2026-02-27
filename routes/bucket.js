@@ -171,7 +171,7 @@ router.get("/:bucketId", auth, findBucketById);
  *       '500':
  *         description: Internal server error
  */
-router.get("/delete/:bucketId", auth, deleteBucket);
+router.delete("/delete/:bucketId", auth, deleteBucket);
 
 /**
  * @swagger

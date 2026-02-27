@@ -129,7 +129,7 @@ router.get("/list/:page/:pageSize", auth, listFiles);
  *       '500':
  *         description: Internal server error
  */
-router.get("/:fileId", getFile);
+router.get("/:fileId", auth, getFile);
 
 /**
  * @swagger
@@ -169,7 +169,7 @@ router.get("/:fileId", getFile);
  *       '500':
  *         description: Internal server error
  */
-router.get("/delete/:bucketId/:fileId", auth, deleteFile);
+router.delete("/delete/:bucketId/:fileId", auth, deleteFile);
 
 /**
  * @swagger

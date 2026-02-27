@@ -115,10 +115,8 @@ export const updateFile = async (req, res) => {
         if (isDuplicateFile && isDuplicateFile._id != req.params.fileId) return res.status(404).json({ warning: 'Same file already exists under different id' });
 
         if (isDuplicateFile && isDuplicateFile.bucket._id != req.params.bucketId) return res.status(404).json({ warning: 'File does not exist in the given bucket' });
-console.log("file",file);
         if (file.filename != req.file.originalname) {
             const filePath = path.join(__dirname, '..', 'uploads', file.bucket.bucketName, file.filename);
-console.log("filePath",filePath);
             await fs.rm(filePath, { recursive: true });
         }
 
@@ -139,7 +137,7 @@ console.log("filePath",filePath);
 // Get a file for download or streaming
 export const getFile = async (req, res) => {
     try {
-        const file = await Files.findOne({ _id: req.params.fileId });
+        const file = await Files.findOne({ _id: req.params.fileId, owner: req.user._id });
 
         if (!file) return res.status(404).json({ warning: 'File not found' });
 

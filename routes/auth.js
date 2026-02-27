@@ -1,8 +1,17 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 import { login, register, logout, logoutAll } from "../controller/auth.js";
 import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20,
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 /**
  * @swagger
@@ -47,7 +56,7 @@ const router = express.Router();
  *       '400':
  *         description: Invalid email or password
  */
-router.post("/login", login);
+router.post("/login", authLimiter, login);
 
 /**
  * @swagger
@@ -95,7 +104,7 @@ router.post("/login", login);
  *       '400':
  *         description: Internal server error
  */
-router.post("/register", register);
+router.post("/register", authLimiter, register);
 
 /**
  * @swagger
