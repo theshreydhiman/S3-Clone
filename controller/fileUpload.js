@@ -1,10 +1,15 @@
-import multer from 'multer'; // Import multer for handling file uploads
-import Buckets from '../models/bucket.js'; // Import the Buckets model
-import Files from '../models/file.js'; // Import the Files model
+
+import multer from 'multer'; 
+import Buckets from '../models/bucket.js'; 
+import Files from '../models/file.js'; 
 
 // Allow only alphanumeric, dash, underscore, dot, and space characters in names
 // used as filesystem paths to prevent directory traversal attacks.
-const isSafeName = (name) => /^[a-zA-Z0-9._\- ]+$/.test(name);
+const isSafeName = (name) => /^[a-zA-Z0-9._- ]+$/.test(name);
+
+// Define file size and type limits
+const maxSize = 10 * 1024 * 1024; // 10MB
+const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
 
 // Multer storage configuration for file uploads
 const storage = multer.diskStorage({
@@ -12,6 +17,14 @@ const storage = multer.diskStorage({
         try {
             if (!isSafeName(file.originalname)) {
                 return cb(new Error('Invalid file name. Avoid path separators and special characters.'));
+            }
+
+            if (file.size > maxSize) {
+                return cb(new Error('File size exceeds the limit of 10MB'));
+            }
+
+            if (!allowedTypes.includes(file.mimetype)) {
+                return cb(new Error('Only JPEG, PNG, and PDF files are allowed'));
             }
 
             // Find the bucket associated with the upload
@@ -44,13 +57,13 @@ const storage = multer.diskStorage({
             // Set destination folder based on bucket name
             cb(null, `uploads/${bucket.bucketName}/`);
         } catch (error) {
-            cb(error);
+            cb({ message: 'Error uploading file', error });
         }
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname); // Set filename to the original filename
+        cb(null, file.originalname); 
     }
 });
 
 // Create multer instance with the configured storage
-export const upload = multer({ storage: storage });
+export const upload = multer({ storage: storage, limits: { fileSize: maxSize } });
