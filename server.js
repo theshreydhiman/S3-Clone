@@ -4,12 +4,23 @@ import dotenv from "dotenv";
 import router from "./routes/index.js"; // Importing the main router for routing
 import swaggerJSDoc from 'swagger-jsdoc'; // Importing Swagger JSDoc for API documentation generation
 import swaggerUi from 'swagger-ui-express'; // Importing Swagger UI for API documentation rendering
+import helmet from 'helmet'; // Import helmet for security headers
+import cors from 'cors'; // Import CORS for cross-origin resource sharing
+import rateLimit from 'express-rate-limit'; // Import rate limiter
 
 dotenv.config(); // Load environment variables from a .env file into process.env
 
 const app = express(); // Creating an Express application
 app.use(express.json()); // Middleware to parse JSON requests
+app.use(helmet()); // Add security headers
+app.use(cors()); // Enable CORS
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+
+app.use(limiter);
 // Define application routes
 app.use(router);
 
