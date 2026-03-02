@@ -1,4 +1,6 @@
+
 import User from "../models/user.js";
+import jwt from 'jsonwebtoken'; // Import the jsonwebtoken library for JWT operations
 
 // Register a new user
 export const register = async (req, res) => {
@@ -16,8 +18,8 @@ export const register = async (req, res) => {
         // Save the user to the database
         await user.save();
         
-        // Generate authentication token
-        const token = await user.authToken();
+        // Generate authentication token with expiration
+        const token = await user.generateAuthToken(3600); // Token expires in 1 hour
 
         // Send response with user data and token
         res.status(201).send({ user, token });
@@ -34,7 +36,7 @@ export const login = async (req, res) => {
         // authenticate user if exist
         const user = await User.findByCred(req.body.email, req.body.password)
         // get user token
-        const token = await user.authToken()
+        const token = await user.generateAuthToken(3600); // Token expires in 1 hour
         
         // Send response with user data
         res.status(200).send({ user, token }); // Token should be defined before sending response
