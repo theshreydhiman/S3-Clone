@@ -1,8 +1,10 @@
-import jwt from 'jsonwebtoken'; // Import the jsonwebtoken library for JWT operations
-import User from '../models/user.js'; // Import the User model
-import dotenv from "dotenv";
 
-dotenv.config(); // Load environment variables from a .env file into process.env
+import jwt from 'jsonwebtoken'; 
+import User from '../models/user.js'; 
+import dotenv from 'dotenv';
+
+dotenv.config(); 
+
 // Middleware function for user authentication
 export const auth = async (req, res, next) => {
     try {
@@ -28,6 +30,6 @@ export const auth = async (req, res, next) => {
         next();
     } catch (e) {
         // If any error occurs during authentication, send a 401 Unauthorized response
-        res.status(401).send('Please log in!');
+        res.status(401).json({ error: 'Please log in!' });
     }
 };

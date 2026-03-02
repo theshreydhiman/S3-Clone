@@ -1,8 +1,9 @@
-import fs from 'fs-extra'; // Import fs-extra for file system operations
-import path from 'path'; // Import path module for dealing with file paths
-import Buckets from '../models/bucket.js'; // Import your Buckets model
+
+import fs from 'fs-extra'; 
+import path from 'path'; 
+import Buckets from '../models/bucket.js'; 
 import Files from '../models/file.js';
-import { fileURLToPath } from 'url'; // Import fileURLToPath from the 'url' module
+import { fileURLToPath } from 'url'; 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,8 +19,8 @@ export const addBuckets = async (req, res) => {
             return res.status(400).json({ error: 'Invalid bucket name. Only alphanumeric characters, dashes, underscores, and dots are allowed.' });
         }
 
-        // Check if a bucket with the same name already exists
-        const isBucket = await Buckets.findOne({ bucketName: req.body.bucketName });
+        // Check if a bucket with the same name already exists for the user
+        const isBucket = await Buckets.findOne({ bucketName: req.body.bucketName, owner: req.user._id });
 
         if (isBucket) {
             return res.status(409).json({ warning: 'Bucket with the name already exists' });
@@ -36,20 +37,20 @@ export const addBuckets = async (req, res) => {
 
         // Create a new folder for the bucket
         const bucketFolderPath = path.join('uploads', bucket.bucketName.toString());
-        await fs.ensureDir(bucketFolderPath); // Create folder if it doesn't exist
+        await fs.ensureDir(bucketFolderPath); 
 
         res.status(201).send(bucket);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error);
+        res.status(400).json({ error: 'Error creating bucket' });
     }
 };
 
 // List all buckets
 export const listBuckets = async (req, res) => {
     try {
-        const page = parseInt(req.params.page) || 1; // Get page number from query parameters, default to 1 if not provided
-        const pageSize = parseInt(req.params.pageSize) || 10; // Maximum number of buckets per page, default to 10 if not provided
+        const page = parseInt(req.params.page) || 1; 
+        const pageSize = parseInt(req.params.pageSize) || 10; 
 
         // Calculate the number of documents to skip based on the page number and page size
         const skip = (page - 1) * pageSize;
@@ -66,7 +67,7 @@ export const listBuckets = async (req, res) => {
         res.status(200).send(buckets);
     } catch (error) {
         console.error(error);
-        res.status(500).send(error);
+        res.status(500).json({ error: 'Error listing buckets' });
     }
 }
 
@@ -75,7 +76,7 @@ export const findBucketById = async (req, res) => {
     try {
         const { bucketId } = req.params;
 
-        // Find the bucket by ID
+        // Find the bucket by ID and owner
         const bucket = await Buckets.findById(bucketId, { bucketName: 1, _id: 1 }).populate({
             path: 'files',
             model: 'Files',
@@ -91,7 +92,7 @@ export const findBucketById = async (req, res) => {
         res.status(200).json(bucket);
     } catch (error) {
         console.error(error);
-        res.status(500).send(error);
+        res.status(500).json({ error: 'Error finding bucket' });
     }
 };
 
@@ -111,6 +112,13 @@ export const updateBucketName = async (req, res) => {
             return res.status(406).json({ error: 'Bucket not found or you do not have permission to update it' });
         }
 
+        // Check if a bucket with the same name already exists for the user
+        const isBucket = await Buckets.findOne({ bucketName: bucketName, owner: req.user._id });
+
+        if (isBucket) {
+            return res.status(409).json({ warning: 'Bucket with the name already exists' });
+        }
+
         // Rename the corresponding folder in the file system
         const oldFolderPath = path.join(__dirname, '..', 'uploads', bucket.bucketName);
         const newFolderPath = path.join(__dirname, '..', 'uploads', bucketName);
@@ -122,7 +130,7 @@ export const updateBucketName = async (req, res) => {
         res.status(200).json({ message: 'Bucket name updated successfully' });
     } catch (error) {
         console.error(error);
-        res.status(500).send(error);
+        res.status(500).json({ error: 'Error updating bucket' });
     }
 };
 
@@ -148,6 +156,6 @@ export const deleteBucket = async (req, res) => {
         res.status(200).json({ message: 'Bucket deleted successfully' });
     } catch (error) {
         console.error(error);
-        res.status(500).send(error);
+        res.status(500).json({ error: 'Error deleting bucket' });
     }
 }
